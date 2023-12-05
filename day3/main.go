@@ -8,6 +8,11 @@ import (
 	"strings"
 )
 
+type Indexes struct {
+	Numbers [][]int
+	Symbols [][]int
+}
+
 func readInput(testFile string) []string {
 	data, err := os.ReadFile(testFile)
 
@@ -18,10 +23,10 @@ func readInput(testFile string) []string {
 	return strings.Split(string(data), "\n")
 }
 
-func parseInput(testFile string) [][][][]int {
-	var parsedInput [][][][]int
+func parseInput(testFile string) []Indexes {
+	var parsedInput []Indexes
 
-	var patternNumbers string = "([0-9]+)"
+	var patternNumbers string = "[0-9]+"
 	numbersRegex := regexp.MustCompile(patternNumbers)
 
 	var patternSymbols string = "[^\\d\\.]"
@@ -30,9 +35,10 @@ func parseInput(testFile string) [][][][]int {
 	for _, line := range readInput(testFile) {
 		// Find the index of the numbers
 		numbersMatches := numbersRegex.FindAllStringSubmatchIndex(line, -1)
+		fmt.Println(numbersMatches)
 		// find the indexes of the symbols
 		symbolMatches := symbolRegex.FindAllStringSubmatchIndex(line, -1)
-		parsedInput = append(parsedInput, [][][]int{numbersMatches, symbolMatches})
+		parsedInput = append(parsedInput, Indexes{numbersMatches, symbolMatches})
 	}
 	return parsedInput
 }
@@ -74,11 +80,11 @@ func part1(testFile string) int {
 	numbers := getNumbersFromInput(testFile)
 
 	for index, row := range data {
-		for indNum, positions := range row[0] {
+		for indNum, positions := range row.Numbers {
 			alreadyPicked := false
 			// check top row
-			if index > 0 && len(data[index-1][1]) > 0 && !alreadyPicked {
-				for _, symbIndexData := range data[index-1][1] {
+			if index > 0 && len(data[index-1].Symbols) > 0 && !alreadyPicked {
+				for _, symbIndexData := range data[index-1].Symbols {
 					if symbIndexData[0] >= positions[0]-1 && symbIndexData[1] <= positions[1]+1 {
 						tmp, err := strconv.Atoi(numbers[index][indNum][0])
 						if err != nil {
@@ -92,7 +98,7 @@ func part1(testFile string) int {
 			}
 			// check bottom row
 			if index < len(parseInput(testFile))-1 && !alreadyPicked {
-				for _, symbIndexData := range data[index+1][1] {
+				for _, symbIndexData := range data[index+1].Symbols {
 					if symbIndexData[0] >= positions[0]-1 && symbIndexData[1] <= positions[1]+1 {
 						tmp, err := strconv.Atoi(numbers[index][indNum][0])
 						if err != nil {
@@ -107,7 +113,7 @@ func part1(testFile string) int {
 
 			// check left
 			if positions[0] > 0 && !alreadyPicked {
-				for _, symbIndexData := range row[1] {
+				for _, symbIndexData := range row.Symbols {
 					if symbIndexData[0] == positions[0]-1 {
 						tmp, err := strconv.Atoi(numbers[index][indNum][0])
 						if err != nil {
@@ -122,7 +128,7 @@ func part1(testFile string) int {
 
 			// check right
 			if !alreadyPicked {
-				for _, symbIndexData := range row[1] {
+				for _, symbIndexData := range row.Symbols {
 					if symbIndexData[0] == positions[1] {
 						tmp, err := strconv.Atoi(numbers[index][indNum][0])
 						if err != nil {
