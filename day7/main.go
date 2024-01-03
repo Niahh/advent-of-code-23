@@ -17,7 +17,9 @@ type hand struct {
 	rank  int
 }
 
-var ranking = []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"}
+var rankingDay1 = []string{"2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"}
+
+var rankingDay2 = []string{"J", "2", "3", "4", "5", "6", "7", "8", "9", "T", "Q", "K", "A"}
 
 func getHandsFromInput(input string) []*hand {
 	var hands []*hand
@@ -105,21 +107,44 @@ func isOnePair(occurences map[rune]int) bool {
 	return false
 }
 
-func getOccurences(cards string) map[rune]int {
+func getMaxInMap(inputMap map[rune]int) (int, rune) {
+	max := 0
+	var topCard rune
+	for card, elem := range inputMap {
+		if elem > max && card != 'J' {
+			max = elem
+			topCard = card
+		}
+	}
+	return max, topCard
+}
+
+func getOccurences(cards string, part int) map[rune]int {
 	occurences := make(map[rune]int)
 
 	for _, card := range cards {
 		occurences[card] += 1
 	}
 
+	if part == 2 {
+		if wildcards, ok := occurences['J']; ok && wildcards != 5 {
+			max, card := getMaxInMap(occurences)
+			for _, elem := range occurences {
+				if elem == max {
+					occurences[card] += wildcards
+					break
+				}
+			}
+			delete(occurences, 'J')
+		}
+	}
+
 	return occurences
 }
 
-func getHandType(hand *hand) int {
-	occurences := getOccurences(hand.cards)
+func getHandType(hand *hand, part int) int {
+	occurences := getOccurences(hand.cards, part)
 	if isCardsFiveOfAKind(occurences) {
-		return 7
-	} else if isCardsFourOfAKind(occurences) {
 		return 6
 	} else if isCardsFourOfAKind(occurences) {
 		return 5
@@ -144,13 +169,19 @@ func getStringIndexInSlice(slice []string, str string) (int, error) {
 	return -1, errors.New("string is not in the provided slice")
 }
 
-func getBetterHandSameType(hand1 hand, hand2 hand) int {
+func getBetterHandSameType(hand1 hand, hand2 hand, part int) int {
+	var rankingSystem = []string{}
+	if part == 1 {
+		rankingSystem = rankingDay1
+	} else {
+		rankingSystem = rankingDay2
+	}
 	for index, card := range hand1.cards {
-		indexHand1, err := getStringIndexInSlice(ranking, string(card))
+		indexHand1, err := getStringIndexInSlice(rankingSystem, string(card))
 		if err != nil {
 			panic("nope")
 		}
-		indexHand2, err := getStringIndexInSlice(ranking, string(hand2.cards[index]))
+		indexHand2, err := getStringIndexInSlice(rankingSystem, string(hand2.cards[index]))
 		if indexHand1 > indexHand2 {
 			return 1
 		} else if indexHand1 < indexHand2 {
@@ -160,9 +191,9 @@ func getBetterHandSameType(hand1 hand, hand2 hand) int {
 	return 0
 }
 
-func compareHands(hand1 hand, hand2 hand) int {
+func compareHands(hand1 hand, hand2 hand, part int) int {
 	if hand1.aType == hand2.aType {
-		return getBetterHandSameType(hand1, hand2)
+		return getBetterHandSameType(hand1, hand2, part)
 	} else if hand1.aType > hand2.aType {
 		return 1
 	} else if hand1.aType < hand2.aType {
@@ -173,25 +204,41 @@ func compareHands(hand1 hand, hand2 hand) int {
 
 func part1(hands []*hand) {
 	for _, hand := range hands {
-		hand.aType = getHandType(hand)
+		hand.aType = getHandType(hand, 1)
 	}
 	sort.Slice(hands, func(i, j int) bool {
-		return compareHands(*hands[i], *hands[j]) == -1
+		return compareHands(*hands[i], *hands[j], 1) == -1
 	})
 
 	sum := 0
 
 	for index, elem := range hands {
 		sum += elem.bid * (index + 1)
-		fmt.Println(elem.cards + " - score : " + strconv.Itoa(elem.bid*(index+1)))
 	}
 
 	fmt.Println("Sum : " + strconv.Itoa(sum))
+}
 
+func part2(hands []*hand) {
+	for _, hand := range hands {
+		hand.aType = getHandType(hand, 2)
+	}
+	sort.Slice(hands, func(i, j int) bool {
+		return compareHands(*hands[i], *hands[j], 2) == -1
+	})
+
+	sum := 0
+
+	for index, elem := range hands {
+		sum += elem.bid * (index + 1)
+	}
+
+	fmt.Println("Sum : " + strconv.Itoa(sum))
 }
 
 func main() {
 	inputFileName := "input.txt"
 	hands := getHandsFromInput(inputFileName)
-	part1(hands)
+	// part1(hands)
+	part2(hands)
 }
