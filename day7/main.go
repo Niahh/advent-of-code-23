@@ -111,7 +111,7 @@ func getMaxInMap(inputMap map[rune]int) (int, rune) {
 	max := 0
 	var topCard rune
 	for card, elem := range inputMap {
-		if elem > max && card != 'J' {
+		if elem > max {
 			max = elem
 			topCard = card
 		}
@@ -128,6 +128,7 @@ func getOccurences(cards string, part int) map[rune]int {
 
 	if part == 2 {
 		if wildcards, ok := occurences['J']; ok && wildcards != 5 {
+			delete(occurences, 'J')
 			max, card := getMaxInMap(occurences)
 			for _, elem := range occurences {
 				if elem == max {
@@ -135,7 +136,6 @@ func getOccurences(cards string, part int) map[rune]int {
 					break
 				}
 			}
-			delete(occurences, 'J')
 		}
 	}
 
